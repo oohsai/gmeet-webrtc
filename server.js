@@ -27,6 +27,28 @@ io.on("connection", (socket) => {
     allUsers[username] = { username, id: socket.id };
     io.emit("joined", allUsers);
   });
+  socket.on("offer", ({ from, to, offer }) => {
+    console.log({ from, to, offer });
+    io.to(allUsers[to].id).emit("offer", { from, to, offer });
+  });
+
+  socket.on("answer", ({ from, to, answer }) => {
+    io.to(allUsers[from].id).emit("answer", { from, to, answer });
+  });
+
+  socket.on("end-call", ({ from, to }) => {
+    io.to(allUsers[to].id);
+  });
+  socket.on("icecandidate", (candidate) => {
+    console.log({ candidate }).emit("end-call", { from, to });
+    socket.broadcast.emit("icecandidate", candidate);
+  });
+
+  socket.on("call-ended", (caller) => {
+    const [from, to] = caller;
+    io.to(allUsers[from].id).emit("call-ended", caller);
+    io.to(allUsers[to].id).emit("call-ended", caller);
+  });
 });
 
 server.listen(9000, () => {
